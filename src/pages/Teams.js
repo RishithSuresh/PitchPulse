@@ -1,28 +1,40 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function Teams() {
-  const [teams, setTeams] = useState([]);
+  const [teams, setTeams] = useState(() => {
+    try {
+      const data = localStorage.getItem('teams');
+      if (!data) return [];
+      return JSON.parse(data);
+    } catch {
+      return [];
+    }
+  });
   const [teamName, setTeamName] = useState("");
   const [playerName, setPlayerName] = useState("");
   const [selectedTeam, setSelectedTeam] = useState(null);
+  const navigate = useNavigate();
 
   const addTeam = (e) => {
     e.preventDefault();
     if (!teamName) return;
-    setTeams([...teams, { name: teamName, players: [] }]);
+    const newTeams = [...teams, { name: teamName, players: [] }];
+    setTeams(newTeams);
+    localStorage.setItem('teams', JSON.stringify(newTeams));
     setTeamName("");
   };
 
   const addPlayer = (e) => {
     e.preventDefault();
     if (!playerName || selectedTeam === null) return;
-    setTeams(
-      teams.map((team, idx) =>
-        idx === selectedTeam
-          ? { ...team, players: [...team.players, playerName] }
-          : team
-      )
+    const newTeams = teams.map((team, idx) =>
+      idx === selectedTeam
+        ? { ...team, players: [...team.players, { name: playerName, stats: { goals: 0, assists: 0, yellow: 0, red: 0 } }] }
+        : team
     );
+    setTeams(newTeams);
+    localStorage.setItem('teams', JSON.stringify(newTeams));
     setPlayerName("");
   };
 
@@ -58,7 +70,12 @@ function Teams() {
                       <ul className="list-group list-group-flush">
                         {team.players.length === 0 && <li className="list-group-item text-muted">No players yet.</li>}
                         {team.players.map((p, i) => (
-                          <li className="list-group-item" key={i}><i className="bi bi-person-fill me-2 text-primary"></i>{p}</li>
+                          <li className="list-group-item d-flex align-items-center justify-content-between" key={i}>
+                            <span><i className="bi bi-person-fill me-2 text-primary"></i>{p.name || p}</span>
+                            <button className="btn btn-sm btn-outline-info" onClick={() => navigate(`/stats?team=${idx}&player=${i}`)}>
+                              <i className="bi bi-bar-chart-fill me-1"></i>View Stats
+                            </button>
+                          </li>
                         ))}
                       </ul>
                       {selectedTeam === idx && (

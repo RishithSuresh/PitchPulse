@@ -1,5 +1,6 @@
 
 import React, { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 
 // Utility to get/set teams from localStorage
@@ -18,12 +19,16 @@ function saveTeamsToStorage(teams) {
 }
 
 
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
+}
+
 function PlayerStats() {
+  const query = useQuery();
+  const navigate = useNavigate();
   const [teams, setTeams] = useState(() => {
-    // Load from localStorage, or fallback to demo if empty
     const stored = getTeamsFromStorage();
     if (stored.length === 0) {
-      // Demo fallback
       return [
         { name: "Red Lions", players: [
           { name: "Amit", stats: { goals: 2, assists: 1, yellow: 0, red: 0 } },
@@ -35,7 +40,6 @@ function PlayerStats() {
         ]}
       ];
     }
-    // Ensure all players have stats
     return stored.map(team => ({
       ...team,
       players: team.players.map(p => ({
@@ -44,13 +48,22 @@ function PlayerStats() {
       }))
     }));
   });
-  const [selectedTeam, setSelectedTeam] = useState(0);
-  const [selectedPlayer, setSelectedPlayer] = useState(0);
+  // Read team/player from query params if present
+  const initialTeam = Number(query.get('team')) || 0;
+  const initialPlayer = Number(query.get('player')) || 0;
+  const [selectedTeam, setSelectedTeam] = useState(initialTeam);
+  const [selectedPlayer, setSelectedPlayer] = useState(initialPlayer);
 
-  // Save to localStorage on teams change
   React.useEffect(() => {
     saveTeamsToStorage(teams);
   }, [teams]);
+
+  // If query params change, update selection
+  React.useEffect(() => {
+    setSelectedTeam(Number(query.get('team')) || 0);
+    setSelectedPlayer(Number(query.get('player')) || 0);
+    // eslint-disable-next-line
+  }, [useLocation().search]);
 
   const handleStatChange = (stat, value) => {
     setTeams(teams => teams.map((team, tIdx) =>
@@ -80,6 +93,9 @@ function PlayerStats() {
               <h2 className="mb-0">Player Stats</h2>
             </div>
             <div className="card-body">
+              <button className="btn btn-outline-secondary mb-3" onClick={() => navigate('/teams')}>
+                <i className="bi bi-arrow-left me-1"></i>Back to Teams
+              </button>
               <div className="row mb-3">
                 <div className="col-md-6">
                   <label className="form-label fw-bold">Select Team</label>
