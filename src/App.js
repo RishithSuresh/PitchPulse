@@ -4,31 +4,44 @@ import Home from "./pages/home";
 import MatchTracker from "./pages/Matchtracker";
 import PlayerStats from "./pages/PlayerStats";
 import Teams from "./pages/Teams";
+import Tournaments from "./pages/Tournaments";
 
 
 function App() {
   return (
     <Router>
       <div>
-        <nav className="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-lg border-bottom border-warning" style={{background: 'linear-gradient(90deg, #212529 80%, #ffc107 100%)'}}>
+        <nav className="navbar navbar-expand-lg navbar-dark shadow-lg">
           <div className="container-fluid">
-            <a className="navbar-brand d-flex align-items-center gap-2" href="/">
+            <Link className="navbar-brand d-flex align-items-center gap-2" to="/">
               <span style={{fontSize: '2rem'}}>⚽</span>
               <span className="fw-bold" style={{letterSpacing: '2px'}}>PitchPulse</span>
-            </a>
-            <div>
-              <Link className="nav-link d-inline text-white fw-bold mx-2" to="/">Home</Link>
-              <Link className="nav-link d-inline text-warning fw-bold mx-2" to="/tracker"><i className="bi bi-trophy-fill me-1"></i>Match Tracker</Link>
-              <Link className="nav-link d-inline text-success fw-bold mx-2" to="/teams"><i className="bi bi-people-fill me-1"></i>Teams</Link>
-              <Link className="nav-link d-inline text-info fw-bold mx-2" to="/stats"><i className="bi bi-bar-chart-fill me-1"></i>Player Stats</Link>
+            </Link>
+            <div className="navbar-nav d-flex flex-row gap-3">
+              <Link className="nav-link fw-bold" to="/">
+                <span>🏠</span> Home
+              </Link>
+              <Link className="nav-link fw-bold" to="/teams">
+                <span>👥</span> Teams
+              </Link>
+              <Link className="nav-link fw-bold" to="/tournaments">
+                <span>🏆</span> Tournaments
+              </Link>
+              <Link className="nav-link fw-bold" to="/tracker">
+                <span>📊</span> Matches
+              </Link>
+              <Link className="nav-link fw-bold" to="/stats">
+                <span>📈</span> Stats
+              </Link>
             </div>
           </div>
         </nav>
 
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/tracker" element={<MatchTracker />} />
           <Route path="/teams" element={<Teams />} />
+          <Route path="/tournaments" element={<Tournaments />} />
+          <Route path="/tracker" element={<MatchTracker />} />
           <Route path="/stats" element={<PlayerStats />} />
         </Routes>
       </div>
