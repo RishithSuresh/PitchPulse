@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PitchPulse - Ultimate Football Game</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Main Menu -->
+    <div id="mainMenu">
+      <div class="logo">⚽ PITCHPULSE</div>
+      <div class="subtitle">Ultimate Football Championship</div>
+      
+      <div class="menu-grid">
+        <div class="menu-card" onclick="showTeamSelection('quick')">
+          <span class="menu-icon">⚡</span>
+          <div class="menu-title">Quick Match</div>
+          <div class="menu-desc">Jump straight into action with a fast-paced match</div>
+        </div>
+        
+        <div class="menu-card" onclick="showTeamSelection('tournament')">
+          <span class="menu-icon">🏆</span>
+          <div class="menu-title">Tournament</div>
+          <div class="menu-desc">Compete in World Cup style knockout tournaments</div>
+        </div>
+        
+        <div class="menu-card" onclick="showTeamSelection('career')">
+          <span class="menu-icon">🌟</span>
+          <div class="menu-title">Career Mode</div>
+          <div class="menu-desc">Build your legacy and climb the rankings</div>
+        </div>
+        
+        <div class="menu-card" onclick="showSettings()">
+          <span class="menu-icon">⚙️</span>
+          <div class="menu-title">Settings</div>
+          <div class="menu-desc">Customize controls, difficulty, and game options</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Team Selection Modal -->
+    <div id="teamSelectionModal" class="modal">
+      <div class="modal-content">
+        <h2 style="text-align: center; margin-bottom: 30px; font-size: 36px; font-family: 'Orbitron', sans-serif;">
+          🌍 SELECT YOUR TEAM
+        </h2>
+        
+        <div id="teamGrid" class="team-grid">
+          <!-- Teams will be populated by JavaScript -->
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px;">
+          <button class="btn btn-primary" onclick="startGame()" id="startGameBtn" disabled>
+            START MATCH
+          </button>
+          <button class="btn btn-secondary" onclick="closeModal()" style="margin-left: 20px;">
+            BACK
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+      <div class="modal-content">
+        <h2 style="text-align: center; margin-bottom: 30px; font-size: 36px; font-family: 'Orbitron', sans-serif;">
+          ⚙️ SETTINGS
+        </h2>
+        
+        <div style="max-width: 600px; margin: 0 auto;">
+          <div style="margin-bottom: 30px;">
+            <label style="display: block; margin-bottom: 10px; font-size: 18px; color: var(--primary);">
+              🎮 Difficulty Level
+            </label>
+            <select id="difficulty" style="width: 100%; padding: 15px; font-size: 16px; border-radius: 10px; background: rgba(255,255,255,0.1); color: white; border: 2px solid rgba(255,255,255,0.2);">
+              <option value="easy">Easy - Beginner Friendly</option>
+              <option value="medium" selected>Medium - Balanced Challenge</option>
+              <option value="hard">Hard - Skilled Players</option>
+              <option value="legendary">Legendary - Ultimate Test</option>
+            </select>
+          </div>
+          
+          <div style="margin-bottom: 30px;">
+            <label style="display: block; margin-bottom: 10px; font-size: 18px; color: var(--primary);">
+              ⏱️ Match Duration
+            </label>
+            <select id="matchDuration" style="width: 100%; padding: 15px; font-size: 16px; border-radius: 10px; background: rgba(255,255,255,0.1); color: white; border: 2px solid rgba(255,255,255,0.2);">
+              <option value="60">1 Minute - Quick</option>
+              <option value="120" selected>2 Minutes - Standard</option>
+              <option value="180">3 Minutes - Extended</option>
+              <option value="300">5 Minutes - Full Match</option>
+            </select>
+          </div>
+          
+          <div style="margin-bottom: 30px;">
+            <label style="display: block; margin-bottom: 10px; font-size: 18px; color: var(--primary);">
+              🎵 Sound Effects
+            </label>
+            <input type="checkbox" id="soundEffects" checked style="width: 24px; height: 24px; cursor: pointer;">
+            <span style="margin-left: 10px;">Enable sound effects</span>
+          </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px;">
+          <button class="btn btn-accent" onclick="saveSettings()">
+            SAVE SETTINGS
+          </button>
+          <button class="btn btn-secondary" onclick="closeModal()" style="margin-left: 20px;">
+            CANCEL
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="teams.js"></script>
+  <script src="menu.js"></script>
+</body>
+</html>
+
