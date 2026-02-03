@@ -2,6 +2,44 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+// Load team selections from localStorage
+let team1Data = null;
+let team2Data = null;
+let gameSettings = { matchDuration: 120, difficulty: 'medium', soundEffects: true };
+
+// Load teams and settings
+function loadGameData() {
+  const team1Id = localStorage.getItem('pitchpulse_team1');
+  const team2Id = localStorage.getItem('pitchpulse_team2');
+  const settings = localStorage.getItem('pitchpulse_settings');
+
+  if (team1Id && typeof getTeam === 'function') {
+    team1Data = getTeam(team1Id);
+  }
+  if (team2Id && typeof getTeam === 'function') {
+    team2Data = getTeam(team2Id);
+  }
+  if (settings) {
+    gameSettings = JSON.parse(settings);
+  }
+
+  // Update scoreboard names if elements exist
+  updateScoreboardNames();
+}
+
+// Update scoreboard with team names
+function updateScoreboardNames() {
+  const score1El = document.getElementById('team1Name');
+  const score2El = document.getElementById('team2Name');
+
+  if (score1El && team1Data) {
+    score1El.textContent = `${team1Data.flag} ${team1Data.name}`;
+  }
+  if (score2El && team2Data) {
+    score2El.textContent = `${team2Data.flag} ${team2Data.name}`;
+  }
+}
+
 // Game state
 const game = {
   score1: 0,
@@ -28,6 +66,35 @@ const ball = {
   bounce: 0.7,
   trail: []
 };
+
+// Initialize players with team data
+function initializePlayers() {
+  // Default values
+  let p1Flag = '🇩🇪', p1Color = '#000', p1Speed = 4;
+  let p2Flag = '🇧🇷', p2Color = '#009c3b', p2Speed = 4;
+
+  // Use team data if available
+  if (team1Data) {
+    p1Flag = team1Data.flag;
+    p1Color = team1Data.colors.primary;
+    p1Speed = 3 + (team1Data.stats.speed / 25); // Speed based on stats
+  }
+  if (team2Data) {
+    p2Flag = team2Data.flag;
+    p2Color = team2Data.colors.primary;
+    p2Speed = 3 + (team2Data.stats.speed / 25);
+  }
+
+  player1.flag = p1Flag;
+  player1.color = p1Color;
+  player1.speed = p1Speed;
+  player1.baseSpeed = p1Speed;
+
+  player2.flag = p2Flag;
+  player2.color = p2Color;
+  player2.speed = p2Speed;
+  player2.baseSpeed = p2Speed;
+}
 
 // Player objects (country flags)
 const player1 = {
@@ -627,7 +694,9 @@ function gameLoop() {
     ctx.fillStyle = '#ffd700';
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 3;
-    const text = game.lastGoalScorer === 1 ? '🇩🇪 GOAL! 🎉' : '🇧🇷 GOAL! 🎉';
+    const team1Name = team1Data ? team1Data.flag : '🇩🇪';
+    const team2Name = team2Data ? team2Data.flag : '🇧🇷';
+    const text = game.lastGoalScorer === 1 ? `${team1Name} GOAL! 🎉` : `${team2Name} GOAL! 🎉`;
     ctx.strokeText(text, canvas.width / 2, 100);
     ctx.fillText(text, canvas.width / 2, 100);
   }
@@ -648,9 +717,18 @@ function gameLoop() {
   if (timeLeft === 0 && !game.isPaused) {
     game.isPaused = true;
     setTimeout(() => {
-      const winner = game.score1 > game.score2 ? '🇩🇪 Germany' :
-                     game.score2 > game.score1 ? '🇧🇷 Brazil' : 'Draw';
-      alert(`Game Over!\n${winner} wins!\nFinal Score: ${game.score1} - ${game.score2}`);
+      const team1FullName = team1Data ? `${team1Data.flag} ${team1Data.name}` : '🇩🇪 Germany';
+      const team2FullName = team2Data ? `${team2Data.flag} ${team2Data.name}` : '🇧🇷 Brazil';
+      const winner = game.score1 > game.score2 ? team1FullName :
+                     game.score2 > game.score1 ? team2FullName : 'Draw';
+
+      const result = game.score1 > game.score2 ? 'WINS!' :
+                     game.score2 > game.score1 ? 'WINS!' : 'It\'s a Draw!';
+
+      alert(`🏆 GAME OVER!\n\n${winner} ${result}\n\nFinal Score: ${game.score1} - ${game.score2}\n\nReturning to main menu...`);
+
+      // Return to menu
+      window.location.href = 'menu.html';
     }, 100);
   }
 
@@ -679,6 +757,17 @@ document.addEventListener('keyup', (e) => {
 });
 
 // Removed click-to-shoot - players now kick the ball by moving into it!
+
+// Initialize game on load
+window.addEventListener('DOMContentLoaded', () => {
+  loadGameData();
+  initializePlayers();
+
+  // Apply match duration from settings
+  if (gameSettings.matchDuration) {
+    game.matchDuration = gameSettings.matchDuration;
+  }
+});
 
 // Start the game
 gameLoop();
