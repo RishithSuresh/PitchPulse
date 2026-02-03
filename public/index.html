@@ -33,7 +33,7 @@
         border-radius: 8px;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
         background: #2d8b3d;
-        cursor: crosshair;
+        cursor: default;
       }
 
       #scoreBoard {
@@ -74,6 +74,16 @@
         display: inline-block;
         margin: 5px;
       }
+
+      .tip {
+        margin-top: 10px;
+        background: rgba(255, 165, 0, 0.2);
+        padding: 10px 20px;
+        border-radius: 8px;
+        color: #ffa500;
+        font-weight: bold;
+        border: 2px solid rgba(255, 165, 0, 0.4);
+      }
     </style>
   </head>
   <body>
@@ -90,9 +100,9 @@
         </div>
       </div>
       <div id="controls">
-        <div class="control-hint">⌨️ WASD - Move Player 1</div>
-        <div class="control-hint">🖱️ Click - Shoot Ball</div>
-        <div class="control-hint">⌨️ Arrow Keys - Move Player 2</div>
+        <div class="control-hint">⌨️ WASD - Move Player 1 (Germany)</div>
+        <div class="control-hint">⌨️ Arrow Keys - Move Player 2 (Brazil)</div>
+        <div class="tip">💡 Run into the ball to kick it! Faster movement = more powerful kick!</div>
       </div>
     </div>
     <script src="game.js"></script>

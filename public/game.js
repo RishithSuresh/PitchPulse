@@ -268,15 +268,26 @@ function checkBallPlayerCollision(player) {
     // Calculate collision angle
     const angle = Math.atan2(dy, dx);
 
-    // Push ball away
+    // Push ball away from player
     const overlap = ball.radius + player.radius - distance;
     ball.x += Math.cos(angle) * overlap;
     ball.y += Math.sin(angle) * overlap;
 
-    // Transfer velocity
-    const speed = Math.sqrt(player.vx * player.vx + player.vy * player.vy) || 5;
-    ball.vx = Math.cos(angle) * speed * 2;
-    ball.vy = Math.sin(angle) * speed * 2;
+    // Calculate kick power based on player movement speed
+    const playerSpeed = Math.sqrt(player.vx * player.vx + player.vy * player.vy);
+
+    // If player is moving, kick with power based on movement
+    if (playerSpeed > 0.5) {
+      // Kick in the direction the player is moving
+      const kickPower = 3.5; // Multiplier for kick strength
+      ball.vx = player.vx * kickPower;
+      ball.vy = player.vy * kickPower;
+    } else {
+      // If player is stationary, just push ball away gently
+      const pushPower = 3;
+      ball.vx = Math.cos(angle) * pushPower;
+      ball.vy = Math.sin(angle) * pushPower;
+    }
   }
 }
 
@@ -341,28 +352,7 @@ document.addEventListener('keyup', (e) => {
   game.keys[e.key] = false;
 });
 
-canvas.addEventListener('mousemove', (e) => {
-  const rect = canvas.getBoundingClientRect();
-  game.mouse.x = e.clientX - rect.left;
-  game.mouse.y = e.clientY - rect.top;
-});
-
-canvas.addEventListener('click', (e) => {
-  const rect = canvas.getBoundingClientRect();
-  const clickX = e.clientX - rect.left;
-  const clickY = e.clientY - rect.top;
-
-  // Shoot ball towards click position
-  const dx = clickX - ball.x;
-  const dy = clickY - ball.y;
-  const distance = Math.sqrt(dx * dx + dy * dy);
-
-  if (distance > 0) {
-    const power = 15;
-    ball.vx = (dx / distance) * power;
-    ball.vy = (dy / distance) * power;
-  }
-});
+// Removed click-to-shoot - players now kick the ball by moving into it!
 
 // Start the game
 gameLoop();
