@@ -83,6 +83,20 @@
         color: #ffa500;
         font-weight: bold;
         border: 2px solid rgba(255, 165, 0, 0.4);
+        line-height: 1.6;
+      }
+
+      @keyframes glow {
+        0%, 100% { box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); }
+        50% { box-shadow: 0 10px 60px rgba(255, 215, 0, 0.4); }
+      }
+
+      #gameCanvas {
+        animation: glow 3s ease-in-out infinite;
+      }
+
+      strong {
+        color: #ffd700;
       }
     </style>
   </head>
@@ -100,9 +114,19 @@
         </div>
       </div>
       <div id="controls">
-        <div class="control-hint">⌨️ WASD - Move Player 1 (Germany)</div>
-        <div class="control-hint">⌨️ Arrow Keys - Move Player 2 (Brazil)</div>
-        <div class="tip">💡 Run into the ball to kick it! Faster movement = more powerful kick!</div>
+        <div style="margin-bottom: 10px;">
+          <strong style="color: #ffd700; font-size: 18px;">🎮 CONTROLS</strong>
+        </div>
+        <div class="control-hint">
+          <strong>🇩🇪 Player 1:</strong> WASD - Move | Q - Charge Shot | E - Dash
+        </div>
+        <div class="control-hint">
+          <strong>🇧🇷 Player 2:</strong> Arrow Keys - Move | Shift - Charge Shot | Enter - Dash
+        </div>
+        <div class="tip">
+          💡 <strong>Tips:</strong> Collect power-ups! ⚡Speed 💥Power 🛡️Shield<br>
+          Hold charge button for super shots! Dash to move quickly!
+        </div>
       </div>
     </div>
     <script src="game.js"></script>
