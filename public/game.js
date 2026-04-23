@@ -52,7 +52,16 @@ const game = {
   matchDuration: 120, // 2 minutes
   isPaused: false,
   lastGoalScorer: null,
-  celebrationTime: 0
+  celebrationTime: 0,
+  // Exciting new features
+  cameraShake: 0,
+  slowMotion: false,
+  slowMotionTime: 0,
+  combo: { player1: 0, player2: 0 },
+  lastKicker: null,
+  ballSpeed: 0,
+  screenFlash: 0,
+  crowdCheer: 0
 };
 
 // Ball object
@@ -267,6 +276,44 @@ function spawnPowerUp() {
   game.powerUps.push(new PowerUp(x, y, type));
 }
 
+// Camera shake effect
+function addCameraShake(intensity) {
+  game.cameraShake = Math.max(game.cameraShake, intensity);
+}
+
+// Screen flash effect
+function addScreenFlash(intensity) {
+  game.screenFlash = Math.max(game.screenFlash, intensity);
+}
+
+// Slow motion effect
+function activateSlowMotion(duration) {
+  game.slowMotion = true;
+  game.slowMotionTime = duration;
+}
+
+// Update combo system
+function updateCombo(player) {
+  if (game.lastKicker === player) {
+    if (player === 1) {
+      game.combo.player1++;
+      game.combo.player2 = 0;
+    } else {
+      game.combo.player2++;
+      game.combo.player1 = 0;
+    }
+  } else {
+    if (player === 1) {
+      game.combo.player1 = 1;
+      game.combo.player2 = 0;
+    } else {
+      game.combo.player2 = 1;
+      game.combo.player1 = 0;
+    }
+  }
+  game.lastKicker = player;
+}
+
 // Draw football pitch
 function drawPitch() {
   // Grass background
@@ -410,19 +457,36 @@ function drawPlayer(player) {
 
 // Draw ball with trail
 function drawBall() {
-  // Draw trail
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  for (let i = 0; i < ball.trail.length; i++) {
-    const point = ball.trail[i];
-    if (i === 0) {
+  // Calculate ball speed for effects
+  game.ballSpeed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+
+  // Enhanced trail with speed-based glow
+  if (ball.trail.length > 0) {
+    for (let i = 0; i < ball.trail.length - 1; i++) {
+      const alpha = (i / ball.trail.length) * 0.5;
+      const point = ball.trail[i];
+      const nextPoint = ball.trail[i + 1];
+
+      // Speed-based color
+      const speedRatio = Math.min(game.ballSpeed / 20, 1);
+      const r = Math.floor(255 * speedRatio);
+      const g = Math.floor(255 * (1 - speedRatio));
+      const b = 255;
+
+      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      ctx.lineWidth = 3 + speedRatio * 2;
+      ctx.beginPath();
       ctx.moveTo(point.x, point.y);
-    } else {
-      ctx.lineTo(point.x, point.y);
+      ctx.lineTo(nextPoint.x, nextPoint.y);
+      ctx.stroke();
     }
   }
-  ctx.stroke();
+
+  // Speed glow effect
+  if (game.ballSpeed > 10) {
+    ctx.shadowBlur = game.ballSpeed * 2;
+    ctx.shadowColor = '#00d4ff';
+  }
 
   // Shadow
   ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
@@ -454,13 +518,16 @@ function drawBall() {
 
 // Update ball physics
 function updateBall() {
+  // Apply time scale for slow motion
+  const timeScale = game.slowMotion ? 0.3 : 1;
+
   // Apply friction
   ball.vx *= ball.friction;
   ball.vy *= ball.friction;
 
-  // Update position
-  ball.x += ball.vx;
-  ball.y += ball.vy;
+  // Update position with time scale
+  ball.x += ball.vx * timeScale;
+  ball.y += ball.vy * timeScale;
 
   // Wall collisions (top and bottom)
   if (ball.y - ball.radius < 0) {
@@ -484,23 +551,45 @@ function updateBall() {
 
   // Goal detection
   if (ball.x - ball.radius < 0 && ball.y > goals.left.y && ball.y < goals.left.y + goals.left.height) {
-    // Goal for player 2
+    // GOAL for player 2! Epic celebration!
     game.score2++;
     document.getElementById('score2').textContent = game.score2;
     game.lastGoalScorer = 2;
-    game.celebrationTime = 120;
-    createParticles(ball.x, ball.y, 30, '#ffd700');
-    createParticles(ball.x, ball.y, 20, '#ff6b35');
+    game.celebrationTime = 180; // 3 seconds
+    game.crowdCheer = 120;
+
+    // Epic particle explosion
+    createParticles(ball.x, ball.y, 50, '#ffd700');
+    createParticles(ball.x, ball.y, 40, '#ff6b35');
+    createParticles(ball.x, ball.y, 30, '#00d4ff');
+    createParticles(ball.x, ball.y, 20, '#fff');
+
+    // Massive screen effects
+    addCameraShake(20);
+    addScreenFlash(0.8);
+    activateSlowMotion(60);
+
     resetBall();
   }
   if (ball.x + ball.radius > canvas.width && ball.y > goals.right.y && ball.y < goals.right.y + goals.right.height) {
-    // Goal for player 1
+    // GOAL for player 1! Epic celebration!
     game.score1++;
     document.getElementById('score1').textContent = game.score1;
     game.lastGoalScorer = 1;
-    game.celebrationTime = 120;
-    createParticles(ball.x, ball.y, 30, '#ffd700');
-    createParticles(ball.x, ball.y, 20, '#ff6b35');
+    game.celebrationTime = 180; // 3 seconds
+    game.crowdCheer = 120;
+
+    // Epic particle explosion
+    createParticles(ball.x, ball.y, 50, '#ffd700');
+    createParticles(ball.x, ball.y, 40, '#ff6b35');
+    createParticles(ball.x, ball.y, 30, '#00d4ff');
+    createParticles(ball.x, ball.y, 20, '#fff');
+
+    // Massive screen effects
+    addCameraShake(20);
+    addScreenFlash(0.8);
+    activateSlowMotion(60);
+
     resetBall();
   }
 
@@ -546,16 +635,31 @@ function checkBallPlayerCollision(player) {
     // Base kick power
     let kickPower = 3.5;
 
+    // Update combo system
+    const playerNum = player === player1 ? 1 : 2;
+    updateCombo(playerNum);
+    const currentCombo = playerNum === 1 ? game.combo.player1 : game.combo.player2;
+
+    // Combo bonus
+    if (currentCombo > 1) {
+      kickPower *= (1 + currentCombo * 0.1);
+    }
+
     // Power-up bonuses
     if (player.powerUp === 'power') {
       kickPower *= 2;
-      createParticles(ball.x, ball.y, 15, '#ff6b35');
+      createParticles(ball.x, ball.y, 20, '#ff6b35');
+      addScreenFlash(0.3);
+      addCameraShake(8);
     }
 
     // Charged shot bonus
     if (player.chargeShot >= player.maxCharge) {
       kickPower *= 1.8;
-      createParticles(ball.x, ball.y, 20, '#ffd700');
+      createParticles(ball.x, ball.y, 30, '#ffd700');
+      activateSlowMotion(30);
+      addScreenFlash(0.5);
+      addCameraShake(12);
       player.chargeShot = 0;
     }
 
@@ -564,7 +668,21 @@ function checkBallPlayerCollision(player) {
       // Kick in the direction the player is moving
       ball.vx = player.vx * kickPower;
       ball.vy = player.vy * kickPower;
-      createParticles(ball.x, ball.y, 8, '#fff');
+
+      // Exciting effects based on kick power
+      const totalSpeed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+      if (totalSpeed > 15) {
+        createParticles(ball.x, ball.y, 15, '#00d4ff');
+        addCameraShake(5);
+        addScreenFlash(0.2);
+      } else {
+        createParticles(ball.x, ball.y, 8, '#fff');
+      }
+
+      // Combo visual feedback
+      if (currentCombo > 2) {
+        createParticles(ball.x, ball.y, currentCombo * 3, '#ffd700');
+      }
     } else {
       // If player is stationary, just push ball away gently
       const pushPower = 3;
@@ -640,6 +758,9 @@ function updatePlayer(player, up, down, left, right, charge, dash) {
 
 // Main game loop
 function gameLoop() {
+  // Apply slow motion effect
+  const timeScale = game.slowMotion ? 0.3 : 1;
+
   if (!game.isPaused) {
     game.gameTime++;
 
@@ -647,10 +768,43 @@ function gameLoop() {
     if (game.gameTime % 300 === 0 && game.powerUps.length < 2) {
       spawnPowerUp();
     }
+
+    // Update slow motion timer
+    if (game.slowMotionTime > 0) {
+      game.slowMotionTime--;
+      if (game.slowMotionTime === 0) {
+        game.slowMotion = false;
+      }
+    }
+
+    // Update camera shake
+    if (game.cameraShake > 0) {
+      game.cameraShake *= 0.9;
+      if (game.cameraShake < 0.1) game.cameraShake = 0;
+    }
+
+    // Update screen flash
+    if (game.screenFlash > 0) {
+      game.screenFlash *= 0.85;
+      if (game.screenFlash < 0.01) game.screenFlash = 0;
+    }
+
+    // Update crowd cheer
+    if (game.crowdCheer > 0) {
+      game.crowdCheer--;
+    }
   }
 
   // Clear canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Apply camera shake
+  ctx.save();
+  if (game.cameraShake > 0) {
+    const shakeX = (Math.random() - 0.5) * game.cameraShake;
+    const shakeY = (Math.random() - 0.5) * game.cameraShake;
+    ctx.translate(shakeX, shakeY);
+  }
 
   // Draw everything
   drawPitch();
@@ -686,19 +840,81 @@ function gameLoop() {
   drawPlayer(player1);
   drawPlayer(player2);
 
-  // Draw celebration
-  if (game.celebrationTime > 0) {
-    game.celebrationTime--;
-    ctx.font = 'bold 60px Arial';
-    ctx.textAlign = 'center';
+  // Restore camera shake transform
+  ctx.restore();
+
+  // Draw combo indicators
+  if (game.combo.player1 > 1) {
+    ctx.font = 'bold 32px Arial';
+    ctx.textAlign = 'left';
     ctx.fillStyle = '#ffd700';
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 3;
+    const comboText = `${game.combo.player1}x COMBO!`;
+    ctx.strokeText(comboText, 20, 80);
+    ctx.fillText(comboText, 20, 80);
+  }
+  if (game.combo.player2 > 1) {
+    ctx.font = 'bold 32px Arial';
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#ffd700';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    const comboText = `${game.combo.player2}x COMBO!`;
+    ctx.strokeText(comboText, canvas.width - 20, 80);
+    ctx.fillText(comboText, canvas.width - 20, 80);
+  }
+
+  // Draw speed indicator
+  if (game.ballSpeed > 12) {
+    ctx.font = 'bold 24px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#00d4ff';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    const speedText = `⚡ ${Math.floor(game.ballSpeed)} KM/H`;
+    ctx.strokeText(speedText, canvas.width / 2, canvas.height - 30);
+    ctx.fillText(speedText, canvas.width / 2, canvas.height - 30);
+  }
+
+  // Draw celebration with animation
+  if (game.celebrationTime > 0) {
+    game.celebrationTime--;
+    const scale = Math.sin(game.celebrationTime / 10) * 0.1 + 1;
+    ctx.save();
+    ctx.translate(canvas.width / 2, 100);
+    ctx.scale(scale, scale);
+
+    ctx.font = 'bold 72px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Rainbow glow effect
+    const hue = (game.celebrationTime * 5) % 360;
+    ctx.shadowBlur = 30;
+    ctx.shadowColor = `hsl(${hue}, 100%, 50%)`;
+
+    ctx.fillStyle = '#ffd700';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 4;
     const team1Name = team1Data ? team1Data.flag : '🇩🇪';
     const team2Name = team2Data ? team2Data.flag : '🇧🇷';
     const text = game.lastGoalScorer === 1 ? `${team1Name} GOAL! 🎉` : `${team2Name} GOAL! 🎉`;
-    ctx.strokeText(text, canvas.width / 2, 100);
-    ctx.fillText(text, canvas.width / 2, 100);
+    ctx.strokeText(text, 0, 0);
+    ctx.fillText(text, 0, 0);
+
+    ctx.restore();
+  }
+
+  // Draw slow motion indicator
+  if (game.slowMotion) {
+    ctx.font = 'bold 20px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#00d4ff';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.strokeText('⏱️ SLOW MOTION', canvas.width / 2, 60);
+    ctx.fillText('⏱️ SLOW MOTION', canvas.width / 2, 60);
   }
 
   // Draw timer
@@ -707,11 +923,28 @@ function gameLoop() {
   const seconds = timeLeft % 60;
   ctx.font = 'bold 24px Arial';
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#fff';
+
+  // Warning color when time is low
+  if (timeLeft < 30) {
+    ctx.fillStyle = '#ff3366';
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#ff3366';
+  } else {
+    ctx.fillStyle = '#fff';
+    ctx.shadowBlur = 0;
+  }
+
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 3;
   ctx.strokeText(`${minutes}:${seconds.toString().padStart(2, '0')}`, canvas.width / 2, 30);
   ctx.fillText(`${minutes}:${seconds.toString().padStart(2, '0')}`, canvas.width / 2, 30);
+  ctx.shadowBlur = 0;
+
+  // Screen flash effect
+  if (game.screenFlash > 0) {
+    ctx.fillStyle = `rgba(255, 255, 255, ${game.screenFlash})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
 
   // Check game over
   if (timeLeft === 0 && !game.isPaused) {

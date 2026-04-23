@@ -1,79 +1,51 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import './App.css';
 import GameCanvas from './components/GameCanvas';
 import GameControls from './components/GameControls';
 import ScoreBoard from './components/ScoreBoard';
-import GameState from './utils/GameState';
 
 function App() {
-  const [gameState, setGameState] = useState(null);
-  const [score, setScore] = useState({ team1: 0, team2: 0 });
-  const gameStateRef = useRef(null);
-  const canvasRef = useRef(null);
-  const animationFrameRef = useRef(null);
-
-  // Initialize game
-  useEffect(() => {
-    const newGameState = new GameState();
-    gameStateRef.current = newGameState;
-    setGameState(newGameState);
-  }, []);
-
-  // Game loop
-  useEffect(() => {
-    if (!gameStateRef.current) return;
-
-    const updateGame = () => {
-      const state = gameStateRef.current;
-      state.update();
-      setScore({ team1: state.team1Score, team2: state.team2Score });
-      animationFrameRef.current = requestAnimationFrame(updateGame);
-    };
-
-    animationFrameRef.current = requestAnimationFrame(updateGame);
-
-    return () => cancelAnimationFrame(animationFrameRef.current);
-  }, [gameState]);
-
-  const handleKickBall = (direction) => {
-    if (gameStateRef.current && gameStateRef.current.selectedPlayer) {
-      gameStateRef.current.kickBall(direction);
-    }
-  };
-
-  const handleSelectPlayer = (teamId, playerId) => {
-    if (gameStateRef.current) {
-      gameStateRef.current.selectPlayer(teamId, playerId);
-    }
-  };
-
-  const handleResetGame = () => {
-    const newGameState = new GameState();
-    gameStateRef.current = newGameState;
-    setGameState(newGameState);
-    setScore({ team1: 0, team2: 0 });
-  };
-
-  if (!gameState) return <div className="loading">Loading Game...</div>;
+  const [score] = useState({ team1: 0, team2: 0 });
 
   return (
-    <div className="app-container">
-      <header className="app-header">
-        <h1>⚽ Football Game</h1>
-      </header>
+    <div className="App" style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #0a0e27 0%, #050814 100%)',
+      color: '#fff',
+      padding: '20px'
+    }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <h1 style={{
+          textAlign: 'center',
+          fontSize: '48px',
+          background: 'linear-gradient(135deg, #00d4ff, #ff6b35, #ffd700)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          marginBottom: '30px'
+        }}>
+          ⚽ PITCHPULSE
+        </h1>
 
-      <ScoreBoard score={score} />
+        <ScoreBoard score={score} />
+        <GameCanvas />
+        <GameControls />
 
-      <GameCanvas 
-        canvasRef={canvasRef} 
-        gameState={gameStateRef.current}
-        onPlayerClick={handleSelectPlayer}
-      />
-
-      <GameControls 
-        onKick={handleKickBall}
-        onReset={handleResetGame}
-      />
+        <div style={{
+          textAlign: 'center',
+          marginTop: '30px',
+          padding: '20px',
+          background: 'rgba(255, 215, 0, 0.1)',
+          borderRadius: '15px',
+          border: '2px solid rgba(255, 215, 0, 0.3)'
+        }}>
+          <p style={{ fontSize: '18px', marginBottom: '10px' }}>
+            💡 <strong>Note:</strong> This React app is a placeholder.
+          </p>
+          <p style={{ fontSize: '16px', color: '#00d4ff' }}>
+            The full game with all features is available at <strong>public/menu.html</strong>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
