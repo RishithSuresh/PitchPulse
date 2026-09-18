@@ -1,0 +1,70 @@
+import { useEffect, useMemo, useState } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
+import './App.css'
+import type { DistributionMode, GeneratedResult, Player } from './types'
+import { clearState, loadState, saveState } from './utils/storage'
+import { generateTeams } from './utils/randomize'
+
+const initialState = loadState()
+function makePlayer(name: string): Player { return { id: crypto.randomUUID(), name: name.trim(), skillRating: null, preferredPosition: null } }
+
+function App() {
+  const [players, setPlayers] = useState<Player[]>(initialState?.players ?? [])
+  const [nameInput, setNameInput] = useState('')
+  const [bulkInput, setBulkInput] = useState('')
+  const [teamCount, setTeamCount] = useState(initialState?.teamCount ?? 2)
+  const [mode, setMode] = useState<DistributionMode>(initialState?.mode ?? 'auto')
+  const [playersPerTeam, setPlayersPerTeam] = useState(initialState?.playersPerTeam ?? 5)
+  const [teamNames, setTeamNames] = useState<string[]>(initialState?.teamNames ?? ['', ''])
+  const [result, setResult] = useState<GeneratedResult | null>(null)
+  const [message, setMessage] = useState('')
+  const [isShuffling, setIsShuffling] = useState(false)
+  const [copied, setCopied] = useState(false)
+  useEffect(() => { saveState({ players, teamCount, mode, playersPerTeam, teamNames }) }, [players, teamCount, mode, playersPerTeam, teamNames])
+
+  const customUnassigned = mode === 'custom' ? Math.max(0, players.length - teamCount * playersPerTeam) : 0
+  const canGenerate = players.length >= teamCount && (mode === 'auto' || playersPerTeam > 0)
+  const distribution = useMemo(() => { if (mode === 'custom') return `${playersPerTeam} per team`; const base = Math.floor(players.length / teamCount); return `${base + (players.length % teamCount ? 1 : 0)} vs ${base}` }, [mode, players.length, playersPerTeam, teamCount])
+
+  const addNames = (raw: string) => {
+    const names = raw.split(/[\n,]+/).map((name) => name.trim()).filter(Boolean)
+    const existing = new Set(players.map((player) => player.name.toLocaleLowerCase())); const additions: Player[] = []; let duplicate = false
+    names.forEach((name) => { const key = name.toLocaleLowerCase(); if (existing.has(key)) duplicate = true; else { existing.add(key); additions.push(makePlayer(name)) } })
+    if (additions.length) setPlayers((current) => [...current, ...additions])
+    setMessage(duplicate ? 'Some names were already on the roster.' : additions.length ? `${additions.length} player${additions.length === 1 ? '' : 's'} added.` : 'Enter a player name first.')
+  }
+  const handleAdd = (event: FormEvent) => { event.preventDefault(); addNames(nameInput); setNameInput('') }
+  const updateTeamName = (index: number, value: string) => setTeamNames((current) => { const next = [...current]; next[index] = value; return next })
+  const randomize = () => {
+    if (!canGenerate) { setMessage(players.length < teamCount ? `You need at least ${teamCount} players to create ${teamCount} teams.` : 'Check your team setup.'); return }
+    setIsShuffling(true); window.setTimeout(() => { try { setResult(generateTeams(players, teamCount, mode, playersPerTeam, teamNames)); setMessage('Teams are ready.') } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to generate teams.') } finally { setIsShuffling(false) } }, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 650)
+  }
+  const copyTeams = async () => {
+    if (!result) return
+    const text = ['FOOTBALL MATCH TEAMS', '', ...result.teams.flatMap((team) => [`${team.name} — ${team.players.length} players`, ...team.players.map((player, index) => `${index + 1}. ${player.name}`), '']), ...(result.unassigned.length ? ['UNASSIGNED', ...result.unassigned.map((player) => `• ${player.name}`)] : [])].join('\n')
+    await navigator.clipboard.writeText(text); setCopied(true); window.setTimeout(() => setCopied(false), 1800)
+  }
+  const shareTeams = async () => { if (!result) return; const text = result.teams.map((team) => `${team.name}: ${team.players.map((player) => player.name).join(', ')}`).join('\n'); if (navigator.share) await navigator.share({ title: 'KickSplit teams', text }); else await copyTeams() }
+  const reset = () => { if (!window.confirm('Start a new match and clear this roster?')) return; clearState(); setPlayers([]); setResult(null); setTeamNames(['', '']); setMessage('New match started.') }
+  const onNumberChange = (event: ChangeEvent<HTMLInputElement>, setter: (value: number) => void) => { const value = Number(event.target.value); if (Number.isFinite(value)) setter(Math.max(1, Math.min(99, value))) }
+
+  return <div className="app-shell">
+    <header className="topbar"><a className="brand" href="/"><span className="brand-mark">⚽</span><span><strong>KickSplit</strong><small>Football team randomizer</small></span></a><button className="text-button" onClick={reset}>Start new match</button></header>
+    <main>
+      <section className="intro"><div className="eyebrow">MATCH DAY / QUICK SETUP</div><h1>Fair teams.<br /><em>Fast setup.</em></h1><p>Add the players who showed up, set your format, and get a clean random draw in seconds.</p></section>
+      <div className="workspace">
+        <section className="panel roster-panel"><div className="panel-heading"><div><span className="step">01</span><h2>Players</h2></div><span className="count-pill">{players.length} {players.length === 1 ? 'player' : 'players'}</span></div>
+          <form className="add-row" onSubmit={handleAdd}><label className="sr-only" htmlFor="player-name">Player name</label><input id="player-name" value={nameInput} onChange={(event) => setNameInput(event.target.value)} placeholder="Enter a player name" /><button className="primary-small" type="submit">Add player <span>+</span></button></form>
+          <div className="bulk-row"><label className="sr-only" htmlFor="bulk-names">Bulk player names</label><textarea id="bulk-names" value={bulkInput} onChange={(event) => setBulkInput(event.target.value)} placeholder="Paste multiple names, one per line or comma-separated" rows={2} /><button className="secondary-button" type="button" onClick={() => { addNames(bulkInput); setBulkInput('') }}>Add list</button></div>
+          {message && <p className="status" aria-live="polite">{message}</p>}
+          <div className="roster-list" aria-live="polite">{players.length === 0 ? <div className="empty-roster"><span>✦</span><strong>No players yet</strong><p>Add everyone available for today's match.</p></div> : players.map((player, index) => <div className="player-row" key={player.id}><span className="player-number">{String(index + 1).padStart(2, '0')}</span><input aria-label={`Edit ${player.name}`} value={player.name} onChange={(event) => setPlayers((current) => current.map((item) => item.id === player.id ? { ...item, name: event.target.value } : item))} onBlur={(event) => { if (!event.target.value.trim()) setPlayers((current) => current.filter((item) => item.id !== player.id)) }} /><button className="remove-button" aria-label={`Remove ${player.name}`} onClick={() => setPlayers((current) => current.filter((item) => item.id !== player.id))}>×</button></div>)}</div>
+          {players.length > 0 && <button className="clear-button" onClick={() => window.confirm('Clear all players?') && setPlayers([])}>Clear all players</button>}
+        </section>
+        <section className="panel setup-panel"><div className="panel-heading"><div><span className="step">02</span><h2>Team setup</h2></div></div><div className="field"><label htmlFor="team-count">Number of teams</label><div className="stepper"><button aria-label="Decrease teams" onClick={() => setTeamCount((value) => Math.max(2, value - 1))}>−</button><input id="team-count" type="number" min="2" max="99" value={teamCount} onChange={(event) => onNumberChange(event, setTeamCount)} /><button aria-label="Increase teams" onClick={() => setTeamCount((value) => Math.min(99, value + 1))}>+</button></div></div><fieldset className="mode-field"><legend>Distribution</legend><label className={mode === 'auto' ? 'radio-card selected' : 'radio-card'}><input type="radio" checked={mode === 'auto'} onChange={() => setMode('auto')} /> <span><strong>Auto balance</strong><small>Everyone gets assigned, as evenly as possible</small></span><i>✓</i></label><label className={mode === 'custom' ? 'radio-card selected' : 'radio-card'}><input type="radio" checked={mode === 'custom'} onChange={() => setMode('custom')} /> <span><strong>Custom team size</strong><small>Choose the exact players per team</small></span><i>✓</i></label></fieldset>{mode === 'custom' && <div className="field custom-size"><label htmlFor="players-per-team">Players per team</label><input id="players-per-team" type="number" min="1" max="99" value={playersPerTeam} onChange={(event) => onNumberChange(event, setPlayersPerTeam)} /><p>{customUnassigned > 0 ? `${customUnassigned} player${customUnassigned === 1 ? '' : 's'} will remain unassigned.` : 'All players fit this format.'}</p></div>}<div className="field team-names"><label>Team names <small>Optional</small></label>{Array.from({ length: teamCount }, (_, index) => <input key={index} value={teamNames[index] ?? ''} placeholder={`Team ${index + 1}`} onChange={(event) => updateTeamName(index, event.target.value)} />)}</div></section>
+      </div>
+      <section className="cta-section"><div><span className="step">03</span><h2>Ready to play?</h2><p>{players.length ? `${players.length} players · ${teamCount} teams · ${distribution}` : 'Add your players to get started.'}</p></div><button className="primary-cta" disabled={isShuffling || !canGenerate} onClick={randomize}>{isShuffling ? 'Shuffling players…' : result ? 'Shuffle again' : 'Randomize teams'} <span>↗</span></button></section>
+      {result && <section className="results" aria-live="polite"><div className="results-heading"><div><div className="eyebrow">MATCH TEAMS / GENERATED</div><h2>Your teams are ready</h2></div><div className="result-actions"><button onClick={copyTeams}>{copied ? 'Copied!' : 'Copy teams'}</button><button onClick={shareTeams}>Share teams</button></div></div><div className="summary-bar"><span><strong>{players.length}</strong> players</span><span><strong>{teamCount}</strong> teams</span><span><strong>{mode === 'auto' ? distribution : `${teamCount * playersPerTeam} assigned`}</strong> distribution</span><span className="assigned-status">● {result.unassigned.length ? `${result.unassigned.length} unassigned` : 'All players assigned'}</span></div><div className="team-grid">{result.teams.map((team, index) => <article className={`team-card team-${index % 4}`} key={team.id}><div className="team-card-heading"><span className="team-index">0{index + 1}</span><div><h3>{team.name}</h3><span>{team.players.length} players</span></div></div><ol>{team.players.map((player) => <li key={player.id}>{player.name}</li>)}</ol></article>)}</div>{result.unassigned.length > 0 && <div className="unassigned"><strong>Unassigned</strong>{result.unassigned.map((player) => <span key={player.id}>{player.name}</span>)}</div>}</section>}
+    </main><footer><span>KickSplit</span><span>Made for the players who showed up.</span></footer>
+  </div>
+}
+export default App
