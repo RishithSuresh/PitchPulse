@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { generateTeams } from './randomize'
 import type { Player } from '../types'
 
-const players = (count: number): Player[] => Array.from({ length: count }, (_, index) => ({ id: String(index), name: `Player ${index}`, quality: (index % 5 + 1) as 1 | 2 | 3 | 4 | 5 }))
+const players = (count: number): Player[] => Array.from({ length: count }, (_, index) => ({ id: String(index), name: `Player ${index}`, rating: (index % 5 + 1) * 2 }))
 
 it.each([[10, 2], [11, 2], [17, 2], [20, 3], [21, 3], [22, 4]])('auto balances %i players across %i teams', (count, teamCount) => {
   const result = generateTeams(players(count), teamCount, 'auto', undefined, [], () => 0.5)
@@ -32,9 +32,9 @@ it('rejects too few players', () => {
 })
 
 it('quality balances teams while preserving exact team sizes', () => {
-  const ratedPlayers = players(12).map((player, index) => ({ ...player, quality: (index < 6 ? 5 : 1) as Player['quality'] }))
+  const ratedPlayers = players(12).map((player, index) => ({ ...player, rating: index < 6 ? 10 : 1 }))
   const result = generateTeams(ratedPlayers, 3, 'auto', undefined, [], () => 0.5, 'quality')
-  const scores = result.teams.map((team) => team.players.reduce((total, player) => total + player.quality, 0))
+  const scores = result.teams.map((team) => team.players.reduce((total, player) => total + player.rating, 0))
   expect(result.teams.map((team) => team.players.length)).toEqual([4, 4, 4])
   expect(Math.max(...scores) - Math.min(...scores)).toBeLessThanOrEqual(4)
   expect(result.unassigned).toHaveLength(0)

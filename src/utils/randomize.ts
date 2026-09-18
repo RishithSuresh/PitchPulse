@@ -1,5 +1,7 @@
 import type { DistributionMode, GeneratedResult, Player, Team, TeamBalanceMode } from '../types'
 
+const ratingValue = (player: Player) => player.rating ?? (player.quality ?? 3) * 2
+
 export function shuffle<T>(items: T[], random: () => number = Math.random): T[] {
   const result = [...items]
   for (let index = result.length - 1; index > 0; index -= 1) {
@@ -17,7 +19,7 @@ export function generateTeams(
   if (players.length < teamCount) throw new Error(`You need at least ${teamCount} players to create ${teamCount} teams.`)
   if (mode === 'custom' && (!Number.isInteger(playersPerTeam) || (playersPerTeam ?? 0) < 1)) throw new Error('Enter a valid number of players per team.')
   const shuffled = balanceMode === 'quality'
-    ? shuffle(players, random).sort((left, right) => right.quality - left.quality)
+    ? shuffle(players, random).sort((left, right) => ratingValue(right) - ratingValue(left))
     : shuffle(players, random)
   const sizes = mode === 'auto'
     ? Array.from({ length: teamCount }, (_, index) => Math.floor(players.length / teamCount) + (index < players.length % teamCount ? 1 : 0))
@@ -27,7 +29,7 @@ export function generateTeams(
     const capacity = sizes.reduce((total, size) => total + size, 0)
     shuffled.slice(0, capacity).forEach((player) => {
       const eligible = teams.filter((team, index) => team.players.length < sizes[index])
-      const score = (team: Team) => team.players.reduce((total, item) => total + (item.quality ?? 3), 0)
+      const score = (team: Team) => team.players.reduce((total, item) => total + ratingValue(item), 0)
       const weakestScore = Math.min(...eligible.map(score))
       const weakest = eligible.filter((team) => score(team) === weakestScore)
       const target = weakest[Math.floor(random() * weakest.length)]

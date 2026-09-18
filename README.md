@@ -8,7 +8,7 @@ A fast, mobile-first football team randomizer for creating fair random teams fro
 - Auto-balanced or custom-size teams
 - Optional team names and unassigned player reporting
 - Choose a captain before or after the draw, or assign one randomly
-- Rate players from 1 to 5 and optionally balance teams by quality
+- Give players custom 0.0-10.0 points, including decimal scores such as 7.8
 - Match timer with presets, custom duration, pause, resume, and reset
 - Fisher-Yates randomization with no duplicate assignments
 - Copy and native share actions
