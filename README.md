@@ -10,6 +10,7 @@ A fast, mobile-first football team randomizer for creating fair random teams fro
 - Choose a captain before or after the draw, or assign one randomly
 - Give players custom 0.0-10.0 points, including decimal scores such as 7.8
 - Match timer with presets, custom duration, pause, resume, and reset
+- Local match history with restore, delete, and clear actions
 - Fisher-Yates randomization with no duplicate assignments
 - Copy and native share actions
 - Local persistence with a start-new-match reset
