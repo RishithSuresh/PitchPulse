@@ -7,6 +7,7 @@ A fast, mobile-first football team randomizer for creating fair random teams fro
 - Add, edit, remove, and bulk-paste player names
 - Auto-balanced or custom-size teams
 - Optional team names and unassigned player reporting
+- Choose a captain before or after the draw, or assign one randomly
 - Fisher-Yates randomization with no duplicate assignments
 - Copy and native share actions
 - Local persistence with a start-new-match reset
