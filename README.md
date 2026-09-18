@@ -17,7 +17,7 @@ A fast, mobile-first football team randomizer for creating fair random teams fro
 
 ## Tech stack
 
-React, TypeScript, Vite, and plain CSS. No backend or account is required.
+React, TypeScript, Vite, and plain CSS. No backend, account, or environment variables are required. Match setup is stored locally in the browser.
 
 ## Local setup
 
@@ -33,9 +33,16 @@ npm run build
 npm run preview
 ```
 
-## Deployment
+## Deployment with Vercel or Netlify
 
-Build the project with `npm run build`. Deploy the generated `dist` directory to Vercel, Netlify, or any static host. Vercel and Netlify will detect Vite automatically when connected to this repository.
+1. Run `npm install`.
+2. Run `npm run build` and confirm the `dist` folder is created.
+3. Import the repository into Vercel or Netlify.
+4. Use `npm run build` as the build command.
+5. Use `dist` as the output directory.
+6. Deploy without database or environment variables.
+
+KickSplit is a static frontend. Player names, points, teams, captain settings, and timer preferences are stored in the visitor's browser using localStorage. No user data is sent to a server.
 
 ## Structure
 
